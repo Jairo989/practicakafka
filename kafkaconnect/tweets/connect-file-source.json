@@ -1,0 +1,12 @@
+{
+  "name": "local-file-source",
+  "config": {
+    "connector.class": "SpoolDirLineDelimitedSourceConnector",
+    "tasks.max": 1,
+    "input.path": "/tmp/input",
+    "input.file.pattern": "twitter.txt",
+    "finished.path": "/tmp/finok",
+    "error.path": "/tmp/finerr",
+    "topic": "tweets_sin_analizar"
+  }
+}

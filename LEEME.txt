@@ -1,0 +1,171 @@
+El sistema consta  de varios componentes de arquitectura que se pueden ver datallados en el fichero PracticaKafka.drawio, se puede encontrar 
+mas información del sistema en los diferentes documentos que se encuentran en el directorio doc del proyecto.
+
+En el directorio doc, se puede encontrar un fichero "Guía de operación detallada.docx", donde se explica al detalle y con ilustraciones
+todas las operaciones a realizar en por "practicakafka".
+ 
+Este sistema se ha diseñado corriendo en entorno windows con la configuración WSL(UBUNTU) que hemos tenido configurado durante el modulo. 
+
+El entorno "practicakafka" debe de ser descomprimido en c: si se desea cambiar la ruta de ubicación del entorno
+debe de tenerse cuidado a la hora de configurar las variables que se encuentran en Instaladorsistema.sh, se explica como realizar dicha 
+configuración en el apartado 2.
+
+1.- Requisitos del sistema
+===========================
+
+	- Equipo:
+		- 16Gb de memoria RAM.
+		- 50Gb de Disco Duro.
+		- CPU i5 o superior.
+		
+	-Software:
+		- Windows 10 Pro o superior.
+		- Docker Desktop 4.27.1 o superior.
+		- Termminal 1.19.10573 o superior.
+		- Ubuntu 22.04.3 LTS
+		- Python3
+		- Librería de python Textblob
+
+2.- Estructura de directorios:
+=============================
++ practicakafka/
+	+ LEEME.txt
+	
+	+ Instaladorsistema.sh
+	
+	+ kafkaconnect/
+		+ tweets/
+			- connect-distributed.properties
+			- connect-file-source.json
+			- delete-file-connector.sh
+			- post-file-connector.sh
+			- twitter.txt
+			
+	+ entorno
+			- docker-compose.yml
+			
+	+ doc
+		- Manual de operación detallada.docx
+		- Manual de uso detallado.docx
+		- Diagrama arquitectura de componentes.pdf
+		- Diagrama de contexto.pdf
+		- Diagrama de contenedores.pdf
+	
+	+ consumerproducerAPI/
+		- ConsumerAnalizador.py
+		- ConsumerProcesador.py
+		- ConsumerComprobador.py
+		+logs/ (Este directorios se creará con Instaladorsistema.sh si no existe).
+			- ConsumerAnalizador.log (Este fichero se creará con Instaladorsistema.sh si no existe).
+			- ConsumerProcesador.log (Este fichero se creará con Instaladorsistema.sh si no existe).
+		
+
+
+3.- Configuración Instaladorsistema.sh
+=====================================
+	Este script se encarga de arrancar, instalar y configurar el entorno "practicakafka", durante el proceso de instalación en la terminal
+que se ha ejecutado Instaldorsistema.sh va a ir mostrando información detallada de lo que va haciendo el instalador.	
+	
+	------------
+	*IMPORTANTE*
+	------------
+ Hay que tener encuenta que en este script hay tres variables de entorno que deben ser configuradas por el usuario para una correcta 
+ instalación del entorno. Estas variables son:
+ 
+	- entorno.
+	- dataset.
+	- logs_APIS.
+	- APIS.
+	
+ Ejemplo de uso y configuración.
+ 
+ Si se trabaja con un entorno windows, WSL (Ubuntu), y el directorio practicakafka se compia en c:, 
+ al abrir un terminal WSL (ubuntu) esa ruta esa ruta equivale a /mnt/c/
+ 
+	c: = /mnt/c/
+ 
+ Asi que dependiendo de donde se copie el entrono "practicakafka" debe de cambiarse la ruta de las variables.
+ 
+ Se muestra la configuración por defecto haciendo referecncia al ejemplo de uso y configuració.
+ 
+							entorno="/mnt/c/practicakafka/"			
+							dataset="/mnt/c/practicakafka/kafkaconnect/tweets/"
+							logs_APIS="/mnt/c/practicakafka/consumerproducerAPI/logs/"
+							APIS="/mnt/c/practicakafka/consumerproducerAPI/"
+							
+4.- Ejecucion de script de configuración del entorno:
+=====================================================
+
+	1- Desde la consola de ubuntu de WSL, entrar en entorno "practicakafka".
+
+		cd /mnt/c/practicakafka/
+
+	2- Ejecutar Instaladorsistema.sh
+	
+		./Instaladorsistema.sh
+		
+	Para más información detallada del proceso de instalación consultar /practicakafka/doc/Guía de instalación.docx 
+
+5.- Comprobación de que todo se ha creado:
+========================================================
+
+Si se desea comprobar que toda la instalación y configuraciones ha salido correctamente se pueden comprobar siguiendo los pasos que 
+se detallan seguidamente.
+
+ Todas estas comprobaciones deben realizarse desde el directorio "practicakafka".
+ 
+	1- Comprobar que los contenedores se ha levantado, ejecutar:
+	
+		docker ps
+		
+	2- Comprobar que los directoerios y el dataset son correctos en el contenedor connect, ejecutar:
+	
+		docker exec -it connect bash
+			ls -lR /tmp/
+			exit
+			
+	3-Comprobar que se ha reiniciado adecuadamente el contenedor connect, ejecutar:
+	
+		docker logs connect -fichero
+		
+		Comprobar que esta siguiente linea en el log: "INFO Kafka Connect started (org.apache.kafka.connect.runtime.Connect)"
+		
+		Ctl+c
+		
+	4- Comprobar que los topics se ha creado correctamente, ejecutar:
+	
+		docker exec -it broker bash
+		
+			kafka-topics --bootstrap-server broker:9092 --topic tweets_sin_analizar --describe
+			kafka-topics --bootstrap-server broker:9092 --topic tweets_analizados --describe
+			kafka-topics --bootstrap-server broker:9092 --topic tweets_procesados --describe
+			exit
+			
+	5- Comprobar que se han creado el directorio logs, ejcutar:
+		
+		ls -lR consumerproducerAPI/
+			
+		Aparecerá el directorio logs/ y los ficheros ConsumerAnalizador.log y ConsumerProcesador.log
+			
+	6- comprobar que han arrancado correctamente las apliciones API, ejecutar:
+	
+		ps axu | grep 'python3' | grep '/mnt/c/practicakafka/consumerproducerAPI/' | grep 'datahack' | grep -v grep
+	
+
+6.- Ejecución del dataset de twitter
+====================================
+
+	1- Posicionar el promt en la ruta donde se encuentran los ficheros de configuracion de KafkaConnect.
+	
+		cd /mnt/c/practicakafka/kafkaconnect/tweets
+		
+	2- Ejecutar la solicitud POST a la URL, con datos proporcionados en un archivo JSON.
+
+		curl -d @"connect-file-source.json" -H "Content-Type: application/json" -X POST http://localhost:8083/connectors
+		
+7.- Muestra de resultados en ksqldb
+===================================
+
+	docker exec -it ksqldb-cli ksql http://ksqldb-server:8088
+	
+		select * from sentimientos;
