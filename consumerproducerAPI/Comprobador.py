@@ -20,4 +20,3 @@ for message in consumer:
         value_decoded = message.value.decode('utf-8', 'ignore')
 
     #print(f"{message.topic}:{message.partition}:{message.offset}: key={key_decoded} value={value_decoded}")
-
